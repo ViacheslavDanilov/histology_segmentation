@@ -152,6 +152,7 @@ class OCTDataModule(pl.LightningDataModule):
             input_size: int = 224,
             batch_size: int = 2,
             num_workers: int = 2,
+            data_location: str = 'local'
     ):
         super().__init__()
         self.data_dir = None
@@ -162,13 +163,18 @@ class OCTDataModule(pl.LightningDataModule):
         self.input_size = input_size
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.data_location = data_location
 
     def prepare_data(self):
-        self.data_dir = 'data/final/smp'
-        # self.data_dir = cl_dataset.get(
-        #     dataset_name=self.dataset_name,
-        #     dataset_project=self.project_name,
-        # ).get_local_copy()
+        if self.data_location == 'local':
+            self.data_dir = 'data/final'
+        elif self.data_location == 'cl_ml':
+            self.data_dir = cl_dataset.get(
+                dataset_name=self.dataset_name,
+                dataset_project=self.project_name,
+            ).get_local_copy()
+        else:
+            raise ValueError(f'The {self.data_location} method is not yet implemented')
 
     def setup(self, stage: str = 'fit'):
         if stage == 'fit':
@@ -181,7 +187,7 @@ class OCTDataModule(pl.LightningDataModule):
             )
             self.val_dataloader_set = OCTDataset(
                 input_size=self.input_size,
-                data_dir=f'{self.data_dir}/val',
+                data_dir=f'{self.data_dir}/test',
                 classes=self.classes,
                 classes_idx=self.classes_idx,
                 use_augmentation=False,
